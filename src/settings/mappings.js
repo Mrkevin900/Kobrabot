@@ -14,25 +14,24 @@ const ROLE_MAPPINGS = {
   "Moderateur Certifie": "1449129714680729630",
   Moderateur: "1449129691876298854",
   "Moderateur Apprenti": "1449129654530347170",
-  
+
   // RP Roles (Police / Commissaire)
   Commissaire: "1458211387091325101",
   Comissaire: "1458211387091325101",
   Comisere: "1458211387091325101",
   "Commissaire Police": "1458211387091325101",
   "Commissaire de Police": "1458211387091325101",
-  Comissaire_Gérant: "ID_A_REMPLIR",
-  
+  Comissaire_Gérant: "1500639443118461110",
+
   // Technical / Other Roles
   Mappeur: "1449129618111205416",
   Legende: "1411313306651721768",
   Donateur: "1411313344543068210",
-  
+
   // Pending Roles
-  Formateur: "ID_A_REMPLIR",
-  Staff: "ID_A_REMPLIR",
-  Animateur: "ID_A_REMPLIR",
-  Designer: "ID_A_REMPLIR",
+  Formateur Staff: "1500639132211347586",
+  Animateur: "1500639228768555049",
+  Designer: "1500639298154795048",
 };
 
 const EMOJI_CONFIG = {
