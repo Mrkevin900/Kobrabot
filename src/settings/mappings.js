@@ -29,7 +29,7 @@ const ROLE_MAPPINGS = {
   Donateur: "1411313344543068210",
 
   // Pending Roles
-  Formateur Staff: "1500639132211347586",
+  "Formateur Staff": "1500639132211347586",
   Animateur: "1500639228768555049",
   Designer: "1500639298154795048",
 };
