@@ -96,10 +96,23 @@ const sync = {
 
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-    const { data, status, error } = await syncAPI.fetchUserData(member.id);
+    const safeEdit = async (payload) => {
+      try {
+        if (interaction.replied || interaction.deferred) {
+          return await interaction.editReply(payload);
+        }
+        return await interaction.reply(payload);
+      } catch (e) {
+        if (interaction.channel && typeof interaction.channel.send === "function") {
+          return await interaction.channel.send(payload).catch(() => {});
+        }
+      }
+    };
+
+    const { data, status, error: apiError } = await syncAPI.fetchUserData(member.id);
     if (!data) {
-      return interaction.editReply(
-        `Aucune donnee API disponible pour ce membre (${status || "erreur"}). ${error || ""}`.trim(),
+      return await safeEdit(
+        `Aucune donnee API disponible pour ce membre (${status || "erreur"}). ${apiError || ""}`.trim(),
       );
     }
 
@@ -204,7 +217,7 @@ const sync = {
       })
       .setTimestamp();
 
-    return interaction.editReply({ embeds: [embed] });
+    return await safeEdit({ embeds: [embed] });
   },
 
   settings: {
@@ -214,6 +227,3 @@ const sync = {
 };
 
 module.exports = { default: sync };
-
-
-
