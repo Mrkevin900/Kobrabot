@@ -191,14 +191,28 @@ async function handleSlashCommand(client, interaction) {
       actorId: interaction.user?.id,
       type: "slash",
     });
+    
     logInteractionError(client, `Erreur commande /${commandName}`, error, {
       ...context,
       durationMs,
     });
-    await replyInteractionError(
-      interaction,
-      "Une erreur est survenue lors de l'execution de la commande.",
-    );
+
+    // Empecher le bot de crasher si l'interaction est expiree
+    try {
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({
+          content: "❌ Une erreur est survenue lors de l'exécution de cette commande.",
+          flags: MessageFlags.Ephemeral,
+        }).catch(() => {});
+      } else {
+        await interaction.followUp({
+          content: "❌ Une erreur est survenue lors du traitement final de la commande.",
+          flags: MessageFlags.Ephemeral,
+        }).catch(() => {});
+      }
+    } catch (e) {
+      // Ignorer l'erreur de reponse si l'interaction est deja fermee
+    }
   }
 }
 

@@ -16,12 +16,12 @@ const ROLE_MAPPINGS = {
   "Moderateur Apprenti": "1449129654530347170",
 
   // RP Roles (Police / Commissaire)
+  "Commissaire Gérant": "1500639443118461110",
+  "Comissaire Gérant": "1500639443118461110",
+  "Commissaire Gerant": "1500639443118461110",
+  "Comissaire Gerant": "1500639443118461110",
+  Commissaire_Gérant: "1500639443118461110",
   Commissaire: "1458211387091325101",
-  Comissaire: "1458211387091325101",
-  Comisere: "1458211387091325101",
-  "Commissaire Police": "1458211387091325101",
-  "Commissaire de Police": "1458211387091325101",
-  Comissaire_Gérant: "1500639443118461110",
 
   // Technical / Other Roles
   Mappeur: "1449129618111205416",
@@ -30,6 +30,7 @@ const ROLE_MAPPINGS = {
 
   // Pending Roles
   "Formateur Staff": "1500639132211347586",
+  Formateur: "1500639132211347586",
   Animateur: "1500639228768555049",
   Designer: "1500639298154795048",
 };
