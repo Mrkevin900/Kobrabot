@@ -41,10 +41,6 @@
 - Classement global (`/leaderboard`)
 - Streaks et matchs (`/streak`, `/match`)
 
-### 🎵 Musique
-- Lecture audio via Lavalink / MagmaStream
-- Panneau de contrôle interactif (boutons Discord)
-- File d'attente, pause, skip, volume
 
 </td>
 <td width="50%">
