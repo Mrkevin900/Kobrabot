@@ -1,4 +1,4 @@
-﻿const {
+const {
   MessageFlags,
   ChannelType,
   PermissionFlagsBits,
@@ -248,9 +248,22 @@ function buildTicketWelcomeEmbeds(client, interaction, ticketType, ticketNumber,
         value: details,
       },
     )
-    .setImage(typeContent.image)
     .setFooter({ text: `${interaction.guild?.name || "Serveur"} | Support Ticket` })
     .setTimestamp();
+
+  const fs = require("fs");
+  const path = require("path");
+  const { AttachmentBuilder } = require("discord.js");
+  const bannerFilename = `ticket_${ticketType}.png`;
+  const bannerPath = path.join(__dirname, "../assets", bannerFilename);
+
+  let files = [];
+  if (fs.existsSync(bannerPath)) {
+    mainEmbed.setImage("attachment://banner.png");
+    files.push(new AttachmentBuilder(bannerPath, { name: "banner.png" }));
+  } else {
+    mainEmbed.setImage(typeContent.image);
+  }
 
   const guideEmbed = new EmbedBuilder()
     .setColor(typeContent.color)
@@ -267,7 +280,7 @@ function buildTicketWelcomeEmbeds(client, interaction, ticketType, ticketNumber,
     guideEmbed.setImage(process.env.TICKET_IMAGE_CREATED);
   }
 
-  return [mainEmbed, guideEmbed];
+  return { embeds: [mainEmbed, guideEmbed], files };
 }
 
 async function ensureTicketLogTable(client) {
@@ -475,15 +488,18 @@ async function createTicket(client, interaction, ticketType, requestData = null)
       },
     ];
     if (staffRoleId) {
-      permissionOverwrites.push({
-        id: staffRoleId,
-        allow: [
-          PermissionFlagsBits.ViewChannel,
-          PermissionFlagsBits.SendMessages,
-          PermissionFlagsBits.ReadMessageHistory,
-          PermissionFlagsBits.ManageMessages,
-        ],
-      });
+      const staffRoleIds = staffRoleId.split(",").map(id => id.trim()).filter(Boolean);
+      for (const roleId of staffRoleIds) {
+        permissionOverwrites.push({
+          id: roleId,
+          allow: [
+            PermissionFlagsBits.ViewChannel,
+            PermissionFlagsBits.SendMessages,
+            PermissionFlagsBits.ReadMessageHistory,
+            PermissionFlagsBits.ManageMessages,
+          ],
+        });
+      }
     }
 
     const channel = await guild.channels.create({
@@ -497,15 +513,16 @@ async function createTicket(client, interaction, ticketType, requestData = null)
       permissionOverwrites,
     });
 
-    const embeds = buildTicketWelcomeEmbeds(client, interaction, ticketType, ticketNumber, requestData);
+    const { embeds, files } = buildTicketWelcomeEmbeds(client, interaction, ticketType, ticketNumber, requestData);
     const staffRoleMention = process.env.TICKET_STAFF_ROLE_ID
-      ? `<@&${process.env.TICKET_STAFF_ROLE_ID}>`
+      ? process.env.TICKET_STAFF_ROLE_ID.split(",").map(id => `<@&${id.trim()}>`).join(" ")
       : "Staff";
 
     await channel
       .send({
         content: `${interaction.user} ${staffRoleMention}`,
         embeds,
+        files,
         components: buildTicketActionRows(client),
       })
       .catch(() => null);
@@ -567,11 +584,14 @@ async function handleCloseTicket(client, interaction) {
 
     const staffRoleId = process.env.TICKET_STAFF_ROLE_ID;
     if (staffRoleId) {
-      await channel.permissionOverwrites.edit(staffRoleId, {
-        ViewChannel: true,
-        SendMessages: false,
-        ReadMessageHistory: true,
-      }).catch(() => {});
+      const staffRoleIds = staffRoleId.split(",").map(id => id.trim()).filter(Boolean);
+      for (const roleId of staffRoleIds) {
+        await channel.permissionOverwrites.edit(roleId, {
+          ViewChannel: true,
+          SendMessages: false,
+          ReadMessageHistory: true,
+        }).catch(() => {});
+      }
     }
     if (ownerId) {
       await channel.permissionOverwrites.edit(ownerId, {
@@ -728,7 +748,8 @@ function isTicketStaff(member) {
   if (member.permissions?.has(PermissionFlagsBits.ManageMessages)) return true;
   const staffRoleId = process.env.TICKET_STAFF_ROLE_ID;
   if (!staffRoleId) return false;
-  return Boolean(member.roles?.cache?.has(staffRoleId));
+  const staffRoleIds = staffRoleId.split(",").map(id => id.trim()).filter(Boolean);
+  return staffRoleIds.some(roleId => member.roles?.cache?.has(roleId));
 }
 
 async function updateTicketTopicField(channel, field, value) {

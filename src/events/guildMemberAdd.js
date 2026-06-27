@@ -1,9 +1,8 @@
 const { ChannelType, EmbedBuilder } = require("discord.js");
-const { getDatabase } = require("../database/database");
 const { buildWelcomeCard } = require("../utils/cards");
 const { isFeatureEnabled, logSecurity } = require("../utils/SecurityUtils");
 
-async function resolveTextChannel(guild, channelId) {
+async function resolveTextChannel(guild, channelId, fallbackKeywords = null) {
   if (!guild) return null;
 
   if (channelId) {
@@ -14,11 +13,16 @@ async function resolveTextChannel(guild, channelId) {
     if (fetched && fetched.isTextBased && fetched.isTextBased()) return fetched;
   }
 
-  return (
-    guild.channels.cache.find(
-      (c) => c.type === ChannelType.GuildText && c.name.toLowerCase().includes("bienvenue"),
-    ) || null
-  );
+  if (fallbackKeywords) {
+    const regex = new RegExp(fallbackKeywords, "i");
+    return (
+      guild.channels.cache.find(
+        (c) => c.type === ChannelType.GuildText && regex.test(c.name),
+      ) || null
+    );
+  }
+
+  return null;
 }
 
 const guildMemberAdd = {
@@ -62,25 +66,55 @@ const guildMemberAdd = {
     }
 
     try {
-      const channel = await resolveTextChannel(guild, welcomeChannelId);
+      const channel = await resolveTextChannel(guild, welcomeChannelId, "bienvenue|welcome");
       if (!channel || !channel.isTextBased()) {
         safeSend(logger, `[WELCOME] Salon bienvenue introuvable (${welcomeChannelId || "non-defini"})`, "WARN");
       } else {
+        const hiEmoji = client?.emoji?.("hi") || "👋";
+        const mascotEmoji = client?.emoji?.("mascot") || "🎉";
+        const bookEmoji = client?.emoji?.("whitelist") || "📖";
+        const clockEmoji = client?.emoji?.("clock") || "⏰";
+
         const card = await buildWelcomeCard(member);
         const embed = new EmbedBuilder()
-          .setColor(0x7c3aed)
-          .setTitle("Bienvenue")
-          .setDescription(`Salut ${member}, bienvenue parmi nous.`)
+          .setColor(client.getConfig()?.embed?.classColor || 0x847bee)
+          .setAuthor({ 
+            name: `Bienvenue sur ${guild.name} !`, 
+            iconURL: guild.iconURL({ dynamic: true, size: 128 }) || member.user.displayAvatarURL({ dynamic: true }) 
+          })
+          .setDescription(
+            `${hiEmoji} Salut ${member} !\n\n` +
+            `Bienvenue sur **${guild.name}** !\n\n` +
+            `Nous sommes heureux de t'accueillir parmi nous.\n\n` +
+            `${bookEmoji} Pense à lire le règlement afin de connaître les règles du serveur.\n\n` +
+            `Nous te souhaitons un excellent moment parmi nous !`
+          )
+          .setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 256 }))
+          .setFooter({ 
+            text: `Bienvenue parmi nous • Membre n°${guild.memberCount}`, 
+            iconURL: member.user.displayAvatarURL({ dynamic: true, size: 64 }) 
+          })
           .setTimestamp();
 
+        let files = [];
         if (card) {
           embed.setImage("attachment://welcome-card.png");
+          files.push(card);
+        } else {
+          const { AttachmentBuilder } = require("discord.js");
+          const path = require("path");
+          const welcomeAttachment = new AttachmentBuilder(
+            path.join(__dirname, "../assets/welcome_banner.png"),
+            { name: "welcome_banner.png" }
+          );
+          embed.setImage("attachment://welcome_banner.png");
+          files.push(welcomeAttachment);
         }
 
         await channel.send({
-          content: `${member}`,
+          content: `${hiEmoji} Salut ${member} ! ${mascotEmoji}`,
           embeds: [embed],
-          files: card ? [card] : [],
+          files: files,
         });
 
         safeSend(logger, `[WELCOME] Message de bienvenue envoye pour ${member.user.tag}`, "READY");

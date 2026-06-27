@@ -1,4 +1,19 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, InteractionContextType } = require("discord.js");
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, InteractionContextType, AttachmentBuilder } = require("discord.js");
+const { getDatabase } = require("../../database/database");
+
+function parseDuration(str) {
+  const match = String(str || "").match(/^(\d+)([smhd])$/i);
+  if (!match) return null;
+  const value = parseInt(match[1], 10);
+  const unit = match[2].toLowerCase();
+  switch (unit) {
+    case "s": return value * 1000;
+    case "m": return value * 60 * 1000;
+    case "h": return value * 60 * 60 * 1000;
+    case "d": return value * 24 * 60 * 60 * 1000;
+    default: return null;
+  }
+}
 
 const giveaway = {
   data: new SlashCommandBuilder()
@@ -30,11 +45,30 @@ const giveaway = {
     const duree = interaction.options.getString("duree");
     const gagnants = interaction.options.getInteger("gagnants");
 
+    const durationMs = parseDuration(duree) || (60 * 60 * 1000);
+    const endTimestamp = Math.floor((Date.now() + durationMs) / 1000);
+
+    const path = require("path");
+    const giveawayAttachment = new AttachmentBuilder(
+      path.join(__dirname, "../../assets/giveaway_banner.jpg"),
+      { name: "giveaway_banner.jpg" }
+    );
+
     const embed = new EmbedBuilder()
-      .setColor(client.getConfig().embed.readyColor)
-      .setTitle("🎁 Giveaway")
-      .setDescription(`Prix : **${titre}**\nNombre de gagnants : **${gagnants}**`)
-      .setFooter({ text: `Giveaway lancé par ${interaction.user.username}` })
+      .setColor(0xFFAA00)
+      .setTitle("🎁 Tirage au sort / Giveaway")
+      .setDescription(
+        `🎉 **Nouveau Concours lancé !**\n\n` +
+        `🏆 **Prix à gagner :** \`${titre}\`\n` +
+        `👥 **Nombre de gagnants :** \`${gagnants}\`\n` +
+        `⏳ **Fin du tirage :** <t:${endTimestamp}:F> (<t:${endTimestamp}:R>)\n\n` +
+        `Clique sur le bouton **Participer** ci-dessous pour t'inscrire !`
+      )
+      .setImage("attachment://giveaway_banner.jpg")
+      .setFooter({
+        text: `Lancé par ${interaction.user.username}`,
+        iconURL: interaction.user.displayAvatarURL({ dynamic: true })
+      })
       .setTimestamp();
 
     const button = new ActionRowBuilder().addComponents(
@@ -45,7 +79,30 @@ const giveaway = {
         .setStyle(ButtonStyle.Success)
     );
 
-    await interaction.reply({ embeds: [embed], components: [button] });
+    const reply = await interaction.reply({
+      embeds: [embed],
+      components: [button],
+      files: [giveawayAttachment],
+      fetchReply: true
+    });
+
+    const db = getDatabase();
+    if (db) {
+      try {
+        await db("giveaways").insert({
+          message_id: reply.id,
+          channel_id: interaction.channelId,
+          host_id: interaction.user.id,
+          prize: titre,
+          winners_count: gagnants,
+          ends_at: new Date(Date.now() + durationMs),
+          ended: false,
+          participants: JSON.stringify([])
+        });
+      } catch (err) {
+        client.getLogger()?.send(`[GIVEAWAY] Erreur SQL insertion: ${err.message}`, "ERROR");
+      }
+    }
   },
 
   settings: {

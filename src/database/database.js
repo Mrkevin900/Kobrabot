@@ -174,6 +174,13 @@ class Database {
       this.db = database;
       isConnected = true;
       this.client.getLogger().send("MySQL connection established", "READY");
+
+      // Verify and bootstrap vital tables if missing
+      await this.checkVitalTables();
+
+      // Auto create GMod tables
+      await this.initGmodTables();
+
       return true;
     } catch (error) {
       if (error?.errno === 1049) {
@@ -196,6 +203,13 @@ class Database {
           this.client
             .getLogger()
             .send("MySQL connection established after bootstrap", "READY");
+
+          // Verify and bootstrap vital tables if missing
+          await this.checkVitalTables();
+
+          // Auto create GMod tables
+          await this.initGmodTables();
+
           return true;
         } catch (bootstrapError) {
           this.client
@@ -218,6 +232,60 @@ class Database {
       this.client.getLogger().send(`Stack: ${error.stack}`, "DEBUG");
       await destroyDatabaseSilently();
       return false;
+    }
+  }
+
+  async checkVitalTables() {
+    try {
+      const knexInstance = this.db;
+      if (!knexInstance) return;
+      const hasUsers = await knexInstance.schema.hasTable("users");
+      const hasGiveaways = await knexInstance.schema.hasTable("giveaways");
+      const hasProgression = await knexInstance.schema.hasTable("user_progression");
+      if (!hasUsers || !hasGiveaways || !hasProgression) {
+        this.client.getLogger().send("Tables vitales manquantes ou base vide. Initialisation du schema...", "WARN");
+        await bootstrapMissingDatabase(this.client);
+      }
+    } catch (error) {
+      this.client.getLogger().send(`Erreur lors de la verification des tables vitales: ${error.message}`, "ERROR");
+    }
+  }
+
+  async initGmodTables() {
+    try {
+      const knexInstance = this.db;
+      const hasPlayers = await knexInstance.schema.hasTable("gmod_players");
+      if (!hasPlayers) {
+        await knexInstance.schema.createTable("gmod_players", (table) => {
+          table.string("steamid", 30).primary();
+          table.string("rpname", 100).notNullable();
+          table.integer("wallet").defaultTo(0);
+          table.integer("bank").defaultTo(0);
+          table.string("job", 50).defaultTo("Citizen");
+          table.integer("playtime").defaultTo(0);
+          table.string("usergroup", 50).defaultTo("user");
+          table.string("discord_id", 20).nullable();
+          table.timestamp("last_seen").defaultTo(knexInstance.fn.now());
+        });
+        this.client.getLogger().send("MySQL table 'gmod_players' initialized", "READY");
+      }
+
+      const hasActions = await knexInstance.schema.hasTable("gmod_actions");
+      if (!hasActions) {
+        await knexInstance.schema.createTable("gmod_actions", (table) => {
+          table.increments("id").primary();
+          table.string("steamid", 30).notNullable();
+          table.string("action_type", 50).notNullable();
+          table.text("action_value").notNullable();
+          table.enum("status", ["pending", "sent", "executed", "failed"]).defaultTo("pending");
+          table.timestamp("created_at").defaultTo(knexInstance.fn.now());
+          table.timestamp("executed_at").nullable();
+          table.text("error_message").nullable();
+        });
+        this.client.getLogger().send("MySQL table 'gmod_actions' initialized", "READY");
+      }
+    } catch (error) {
+      this.client.getLogger().send(`Error initializing GMod tables: ${error.message}`, "ERROR");
     }
   }
 

@@ -2,6 +2,25 @@
 
 ---
 
+## v1.30.0 — Mega Update "Famille LoneSide" & Nettoyage Lavalink *(2026-06-28)*
+
+### 🚀 Nouvelles Fonctionnalités & Commandes
+- **Nouveau Système de Giveaways (Concours)** : Inscription par boutons interactifs Discord et tirage au sort automatique planifié toutes les 10 secondes en tâche de fond (`giveawayWatcher.js`).
+- **Auto-Bootstrap MySQL** : Le bot vérifie et crée automatiquement les tables vitales (`users`, `giveaways`, `user_progression`) lors du démarrage si elles sont absentes (`database.js`).
+- **Commande `/reglement`** : Ajout d'une commande d'administration permettant de diffuser les règles du serveur Discord avec sa bannière de présentation dédiée.
+- **Script de Déploiement d'Émojis** : Création d'un utilitaire (`deployEmojis.js`) facilitant l'importation en masse de tous les émojis du dossier local `kbrp_emojis/` directement sur votre serveur sans doublons.
+
+### ⚙️ Améliorations & Configuration
+- **Nouveau Salon des Départs** : Configuration de `GOODBYE_CHANNEL_ID` dans le fichier `.env` pour envoyer un embed et une image (`goodbye_banner.png`) personnalisés lorsqu'un membre quitte le serveur.
+- **Rôles de Visualisation Judiciaire** : Ajout de la clé `PUNISHMENTS_VIEW_ROLE_ID` pour restreindre l'accès à la commande `/punishments` aux membres possédant ce rôle (en plus des administrateurs).
+- **Mise à jour d'Assets (Images)** : Synchronisation de toutes les bannières, logos de tickets (recrutement, bug, questions, plaintes, etc.) et bannières de bienvenue/départ.
+
+### 🧹 Documentation & Nettoyage
+- **Suppression du Système Lavalink** : Nettoyage des références obsolètes à Lavalink ou à un service de musique n'existant pas dans le bot (Cobra Music).
+- **Nouveau README Professionnel** : Réécriture complète de la documentation pour refléter les fonctionnalités réelles du bot et détailler précisément le processus d'installation.
+
+---
+
 ## v2.0.0 — Critical Disk Fix & Command Recovery Update *(2026-05-03)*
 
 ### 🔧 Corrections Commandes

@@ -78,6 +78,7 @@ function buildVocalPanelEmbed(client, guild, ownerMember, entry) {
       },
     )
     .setColor(0x9b59b6)
+    .setImage("attachment://vocal_banner.png")
     .setFooter({
       text: `${ownerMember?.user?.username || "Owner"} | Systeme Vocal`,
     })
@@ -229,7 +230,11 @@ async function updateVocalPanelMessage(client, interaction, guild, channel, owne
   const embed = buildVocalPanelEmbed(client, guild, ownerMember, entry);
   const rows = buildVocalRows(client, channel.id, ownerId, entry);
   if (interaction.message?.edit) {
-    await interaction.message.edit({ embeds: [embed], components: rows }).catch(() => {});
+    const path = require("path");
+    const { AttachmentBuilder } = require("discord.js");
+    const bannerPath = path.join(__dirname, "../assets/vocal_banner.png");
+    const file = new AttachmentBuilder(bannerPath, { name: "vocal_banner.png" });
+    await interaction.message.edit({ embeds: [embed], components: rows, files: [file] }).catch(() => {});
   }
 }
 
@@ -240,7 +245,11 @@ async function updateVocalPanelMessageById(client, guild, channel, messageId, ow
   const rows = buildVocalRows(client, channel.id, ownerId, entry);
   const msg = await channel.messages.fetch(messageId).catch(() => null);
   if (!msg?.edit) return;
-  await msg.edit({ embeds: [embed], components: rows }).catch(() => {});
+  const path = require("path");
+  const { AttachmentBuilder } = require("discord.js");
+  const bannerPath = path.join(__dirname, "../assets/vocal_banner.png");
+  const file = new AttachmentBuilder(bannerPath, { name: "vocal_banner.png" });
+  await msg.edit({ embeds: [embed], components: rows, files: [file] }).catch(() => {});
 }
 
 async function handleVocalSelectMenu(client, interaction) {

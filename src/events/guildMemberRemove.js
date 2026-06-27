@@ -1,4 +1,4 @@
-﻿const { EmbedBuilder, ChannelType } = require("discord.js");
+const { EmbedBuilder, ChannelType } = require("discord.js");
 const {
   bumpCounter,
   fetchAuditExecutor,
@@ -6,6 +6,29 @@ const {
   logSecurity,
   punishExecutor,
 } = require("../utils/SecurityUtils");
+
+async function resolveTextChannel(guild, channelId, fallbackKeywords = null) {
+  if (!guild) return null;
+
+  if (channelId) {
+    const cached = guild.channels.cache.get(channelId);
+    if (cached && cached.isTextBased && cached.isTextBased()) return cached;
+
+    const fetched = await guild.channels.fetch(channelId).catch(() => null);
+    if (fetched && fetched.isTextBased && fetched.isTextBased()) return fetched;
+  }
+
+  if (fallbackKeywords) {
+    const regex = new RegExp(fallbackKeywords, "i");
+    return (
+      guild.channels.cache.find(
+        (c) => c.type === ChannelType.GuildText && regex.test(c.name),
+      ) || null
+    );
+  }
+
+  return null;
+}
 
 const guildMemberRemove = {
   async executeHandler(client, member) {
@@ -34,27 +57,44 @@ const guildMemberRemove = {
       }
 
       try {
-        const welcomeChannelId = process.env.WELCOME_CHANNEL_ID;
-        const welcomeChannel =
-          guild.channels.cache.get(welcomeChannelId) ||
-          guild.channels.cache.find(
-            (c) => c.name === "bienvenue" && c.type === ChannelType.GuildText,
-          );
+        const goodbyeChannelId = process.env.GOODBYE_CHANNEL_ID || "";
+        const goodbyeChannel = await resolveTextChannel(guild, goodbyeChannelId, "depart|goodbye|leave|quit|au-revoir|au revoir");
 
-        if (welcomeChannel && welcomeChannel.isTextBased()) {
+        if (goodbyeChannel && goodbyeChannel.isTextBased()) {
+          const byeEmoji = client?.emoji?.("bye") || "👋";
+          const cancelEmoji = client?.emoji?.("cancel") || "❌";
+
           const goodbyeEmbed = new EmbedBuilder()
-            .setColor(0xff0000)
-            .setTitle("Depart du serveur")
-            .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
+            .setColor(client.getConfig()?.embed?.errorColor || 0xff3d00)
+            .setAuthor({ 
+              name: `Départ de ${member.user.tag}`, 
+              iconURL: member.user.displayAvatarURL({ dynamic: true }) 
+            })
             .setDescription(
-              `**${member.user.username}** a quitte le serveur.\n\n` +
-                `Nous esperons que tu reviendras bientot.\n\n` +
-                `Il y a maintenant **${guild.memberCount}** membres.`,
+              `${byeEmoji} Au revoir **${member.user.username}**\n\n` +
+              `Merci d'avoir fait partie de notre communauté.\n\n` +
+              `Nous espérons te revoir un jour.\n\n` +
+              `Bonne continuation !`
             )
-            .setFooter({ text: `ID: ${member.user.id}` })
+            .setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 256 }))
+            .setFooter({ text: `ID: ${member.user.id} • Il reste ${guild.memberCount} membres` })
             .setTimestamp();
 
-          await welcomeChannel.send({ embeds: [goodbyeEmbed] }).catch(() => {});
+          const fs = require("fs");
+          const path = require("path");
+          const { AttachmentBuilder } = require("discord.js");
+          const goodbyeBannerPath = path.join(__dirname, "../assets/goodbye_banner.png");
+          
+          let files = [];
+          if (fs.existsSync(goodbyeBannerPath)) {
+            const goodbyeAttachment = new AttachmentBuilder(goodbyeBannerPath, { name: "goodbye_banner.png" });
+            goodbyeEmbed.setImage("attachment://goodbye_banner.png");
+            files.push(goodbyeAttachment);
+          }
+
+          await goodbyeChannel.send({ embeds: [goodbyeEmbed], files: files }).catch(() => {});
+        } else {
+          safeSend(log, `[GOODBYE] Salon départ introuvable (${goodbyeChannelId || "non-defini"})`, "WARN");
         }
       } catch (error) {
         safeSend(log, `Erreur message depart: ${error.message}`, "ERROR");
@@ -63,8 +103,8 @@ const guildMemberRemove = {
       try {
         const logsChannelId = process.env.LOGS_CHANNEL_ID;
         if (logsChannelId) {
-          const logsChannel = guild.channels.cache.get(logsChannelId);
-          if (logsChannel && logsChannel.type === ChannelType.GuildText) {
+          const logsChannel = await resolveTextChannel(guild, logsChannelId);
+          if (logsChannel && logsChannel.isTextBased()) {
             const logEmbed = new EmbedBuilder()
               .setColor(0xff0000)
               .setTitle("Membre parti")

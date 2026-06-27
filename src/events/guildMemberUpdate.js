@@ -1,4 +1,4 @@
-﻿const { EmbedBuilder, ChannelType } = require("discord.js");
+const { EmbedBuilder, ChannelType, AttachmentBuilder } = require("discord.js");
 const { getDatabase } = require("../database/database");
 const {
   DEFAULT_STAFF_BOARD,
@@ -263,11 +263,18 @@ const guildMemberUpdate = {
             const boostCount = guild.premiumSubscriptionCount || 0;
             const boostLevel = guild.premiumTier || "None";
 
+            const path = require("path");
+            const boostAttachment = new AttachmentBuilder(
+              path.join(__dirname, "../assets/boost_banner.png"),
+              { name: "boost_banner.png" }
+            );
+
             const boostEmbed = new EmbedBuilder()
               .setColor("#9B59B6")
               .setTitle("Merci pour le boost")
               .setDescription(`${newMember.user} vient de booster **${guild.name}**.\n\nMerci pour ton soutien.`)
               .setThumbnail(newMember.user.displayAvatarURL({ size: 256 }))
+              .setImage("attachment://boost_banner.png")
               .addFields(
                 { name: "Boosts du serveur", value: `${boostCount} boost(s)`, inline: true },
                 { name: "Niveau du serveur", value: `Niveau ${boostLevel}`, inline: true },
@@ -280,7 +287,10 @@ const guildMemberUpdate = {
               .setFooter({ text: "KobraBot | Boost Notification" })
               .setTimestamp();
 
-            await boostChannel.send({ embeds: [boostEmbed] }).catch((err) => {
+            await boostChannel.send({
+              embeds: [boostEmbed],
+              files: [boostAttachment],
+            }).catch((err) => {
               log?.send(`Impossible d'envoyer la notif boost: ${err.message}`, "ERROR");
             });
           }

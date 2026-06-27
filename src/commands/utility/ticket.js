@@ -1,4 +1,4 @@
-﻿const {
+const {
   SlashCommandBuilder,
   EmbedBuilder,
   ActionRowBuilder,
@@ -7,6 +7,7 @@
   ChannelType,
   PermissionFlagsBits,
   MessageFlags,
+  AttachmentBuilder,
 } = require("discord.js");
 const {
   buildTicketActionRows,
@@ -97,6 +98,12 @@ const ticket = {
       process.env.TICKET_PANEL_IMAGE_URL ||
       "https://github.com/KB-RolePlay/assets/blob/main/discord-stickers/wumpus--co-daily-routine/working/sticker.gif?raw=true";
 
+    const path = require("path");
+    const supportAttachment = new AttachmentBuilder(
+      path.join(__dirname, "../../assets/support_banner.png"),
+      { name: "support_banner.png" }
+    );
+
     const embed = new EmbedBuilder()
       .setColor(0xff9500)
       .setTitle(`${panelEmoji} Comment creer un ticket ?`)
@@ -107,6 +114,7 @@ const ticket = {
           "L'equipe de moderation",
       )
       .setThumbnail(helperImage)
+      .setImage("attachment://support_banner.png")
       .setFooter({
         text: interaction.guild?.name || interaction.client.user.username,
         iconURL: interaction.client.user.displayAvatarURL({ dynamic: true }),
@@ -146,7 +154,7 @@ const ticket = {
 
     const row = new ActionRowBuilder().addComponents(menu);
 
-    await targetChannel.send({ embeds: [embed], components: [row] });
+    await targetChannel.send({ embeds: [embed], components: [row], files: [supportAttachment] });
     return interaction.reply({
       content: `Panneau ticket envoye dans ${targetChannel}.`,
       flags: MessageFlags.Ephemeral,

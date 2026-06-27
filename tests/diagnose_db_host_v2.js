@@ -2,10 +2,10 @@ const mysql = require('mysql2/promise');
 require('dotenv').config();
 
 async function testConnections() {
-    const hosts = ['mysql', 'db', 'database', 'mariadb', '172.17.0.1'];
-    const user = 'u1_3lfSts6lV8';
-    const password = 'R=VR@!Vqia1mKOgBe+x1El+I';
-    const database = 's1_bot';
+    const hosts = [process.env.SQL_HOST || 'mysql', 'mysql', 'db', 'database', 'mariadb', '172.17.0.1'];
+    const user = process.env.SQL_USER;
+    const password = process.env.SQL_PASSWORD || '';
+    const database = process.env.SQL_BASE || 's1_bot';
 
     for (const host of hosts) {
         console.log(`Testing host: ${host}...`);

@@ -54,6 +54,30 @@ const EMOJI_CONFIG = {
   force: { names: ["kb_add", "force", "rocket", "ufo", "zeus"], fallback: "\u{1F680}" },
   status: { names: ["magnifying_glass_112", "magnifying_glass", "status", "search"], fallback: "\u{1F50D}" },
   stats: { names: ["briefcase", "money", "stats", "chart", "star", "manuteno"], fallback: "\u{1F4CA}" },
+  
+  // Custom overhaul mapping
+  success: { names: ["success", "checkmark", "verifiedroxo", "verifiedbook", "2", "4"], fallback: "✅" },
+  error: { names: ["error", "error_112", "no", "ban", "cancel", "trash"], fallback: "❌" },
+  warning: { names: ["warning", "alert", "exc"], fallback: "⚠️" },
+  info: { names: ["info", "information", "magnifying_glass_112", "magnifying_glass"], fallback: "ℹ️" },
+  loading: { names: ["loading", "loader", "progress", "refresh", "repeat"], fallback: "⏳" },
+  giveaway: { names: ["giveaway", "party", "star", "crown", "gift"], fallback: "🎉" },
+  moderation: { names: ["moderation", "police", "shield", "ban", "muted"], fallback: "🛡️" },
+  tickets: { names: ["tickets", "ticket", "briefcase", "star"], fallback: "🎫" },
+  logs: { names: ["logs", "log", "manuteno", "briefcase"], fallback: "📝" },
+  security: { names: ["security", "shield", "lock", "verifiedbook", "verifiedroxo"], fallback: "🔐" },
+  level: { names: ["level", "xp", "star", "crown"], fallback: "⭐" },
+  administration: { names: ["administration", "admin", "crown", "star"], fallback: "👑" },
+  music: { names: ["music", "song", "mic", "microphone"], fallback: "🎵" },
+  fun: { names: ["fun", "lol", "hi", "wink", "cool"], fallback: "🎮" },
+  verification: { names: ["verification", "verifiedroxo", "verifiedbook", "checkmark"], fallback: "✅" },
+  validation: { names: ["validation", "checkmark", "verifiedroxo", "success"], fallback: "✅" },
+  cancel: { names: ["cancel", "no", "error", "trash"], fallback: "❌" },
+  clock: { names: ["clock", "time", "date", "manuteno"], fallback: "⏰" },
+  bell: { names: ["bell", "notif", "alert"], fallback: "🔔" },
+  gift: { names: ["gift", "giveaway", "party"], fallback: "🎁" },
+  hi: { names: ["hi", "welcome", "cool", "lol"], fallback: "👋" },
+  bye: { names: ["bye", "rip", "cry"], fallback: "👋" },
 };
 
 const EMOJI_ALIASES = {

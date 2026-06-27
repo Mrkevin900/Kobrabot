@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, InteractionContextType } = require("discord.js");
+const { SlashCommandBuilder, EmbedBuilder, InteractionContextType, AttachmentBuilder } = require("discord.js");
 
 const boost = {
   data: new SlashCommandBuilder()
@@ -33,6 +33,12 @@ const boost = {
       3: "Niveau 3 ⭐⭐⭐",
     };
 
+    const path = require("path");
+    const boostAttachment = new AttachmentBuilder(
+      path.join(__dirname, "../../assets/boost_banner.png"),
+      { name: "boost_banner.png" }
+    );
+
     const embed = new EmbedBuilder()
       .setColor("#FF1493")
       .setTitle("🎉 Merci pour le boost !")
@@ -41,6 +47,7 @@ const boost = {
         `Grâce à toi, la communauté débloque des avantages exclusifs.`
       )
       .setThumbnail(membre.displayAvatarURL({ dynamic: true, size: 512 }))
+      .setImage("attachment://boost_banner.png")
       .addFields(
         { name: "📦 Nombre total de boosts", value: `**${boostCount}**`, inline: true },
         { name: "🚀 Niveau de boost", value: `**${tiers[boostTier] || "Inconnu"}**`, inline: true }
@@ -48,7 +55,7 @@ const boost = {
       .setFooter({ text: `${guild.name} | Toute l'équipe te remercie ! ❤️` })
       .setTimestamp();
 
-    await interaction.reply({ embeds: [embed] });
+    await interaction.reply({ embeds: [embed], files: [boostAttachment] });
   },
 
   settings: {

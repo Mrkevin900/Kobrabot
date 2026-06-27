@@ -37,10 +37,11 @@ module.exports = {
             
             // On récupère le Karma (nombre de sanctions) depuis l'API
             let karma = 0;
+            let uuid = null;
             const api = interaction.client.kobralostAPI;
             if (api) {
                 const playerRes = await api.getPlayer(targetUser.id);
-                const uuid = playerRes.success ? playerRes.data.uuid : null;
+                uuid = playerRes.success ? playerRes.data.uuid : null;
                 if (uuid) {
                     const punRes = await api.getAllPunishments(uuid);
                     if (punRes.success && Array.isArray(punRes.data)) {
@@ -50,9 +51,11 @@ module.exports = {
             }
             // Fetch Badges
             let badges = [];
-            const badgeRes = await api.getPlayerBadges(uuid);
-            if (badgeRes.success && Array.isArray(badgeRes.data)) {
-                badges = badgeRes.data;
+            if (api && uuid) {
+                const badgeRes = await api.getPlayerBadges(uuid);
+                if (badgeRes.success && Array.isArray(badgeRes.data)) {
+                    badges = badgeRes.data;
+                }
             }
             data.badges = badges;
 

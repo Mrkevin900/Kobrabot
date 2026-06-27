@@ -8,6 +8,9 @@ class ProgressionManager {
     constructor(client) {
         this.client = client;
         this.xpCooldowns = new Map();
+        this.tableChecked = false;
+        this.tableCheckedPromise = null;
+        this.enabled = true;
         
         // Configuration via .env
         this.XP_BASE = parseInt(process.env.XP_GAIN_BASE) || 18;
@@ -22,15 +25,79 @@ class ProgressionManager {
         this.voiceInterval = null;
     }
 
-    /**
-     * Resilient database update with retry logic.
-     */
+    isMissingTableError(error) {
+        const message = String(error?.message || "").toLowerCase();
+        return (
+            error?.code === "ER_NO_SUCH_TABLE" ||
+            message.includes("doesn't exist") ||
+            message.includes("does not exist") ||
+            message.includes("unknown table")
+        );
+    }
+
+    async ensureProgressionTable() {
+        if (this.tableChecked) return this.enabled;
+        if (this.tableCheckedPromise) return this.tableCheckedPromise;
+
+        this.tableCheckedPromise = (async () => {
+            const db = this.client.database?.getDatabase();
+            if (!db) {
+                this.enabled = false;
+                this.tableChecked = true;
+                return false;
+            }
+
+            try {
+                const exists = await db.schema.hasTable("user_progression");
+                if (!exists) {
+                    this.client.getLogger().send(
+                        "Table 'user_progression' manquante. Désactivation des mises à jour de progression.",
+                        "WARN",
+                    );
+                    this.enabled = false;
+                }
+                this.tableChecked = true;
+                return exists;
+            } catch (error) {
+                const message = error?.message || "unknown";
+                if (this.isMissingTableError(error)) {
+                    this.client.getLogger().send(
+                        `Progression table error: ${message}. Désactivation des mises à jour de progression.`,
+                        "WARN",
+                    );
+                } else {
+                    this.client.getLogger().send(
+                        `Erreur vérification table user_progression: ${message}`,
+                        "ERROR",
+                    );
+                }
+                this.enabled = false;
+                this.tableChecked = true;
+                return false;
+            }
+        })();
+
+        try {
+            return await this.tableCheckedPromise;
+        } finally {
+            this.tableCheckedPromise = null;
+        }
+    }
+
     async safeUpdate(db, userId, payload, retryCount = 3) {
         for (let i = 0; i < retryCount; i++) {
             try {
                 await db("user_progression").where({ user_id: userId }).update(payload);
                 return true;
             } catch (error) {
+                if (this.isMissingTableError(error)) {
+                    this.enabled = false;
+                    this.client.getLogger().send(
+                        `Table 'user_progression' indisponible pendant safeUpdate: ${error.message}`,
+                        "WARN",
+                    );
+                    throw error;
+                }
                 if (i === retryCount - 1) throw error;
                 this.client.getLogger().send(`DB Update Retry ${i+1}/${retryCount} for ${userId}: ${error.message}`, "WARN");
                 await new Promise(resolve => setTimeout(resolve, 1000));
@@ -38,6 +105,9 @@ class ProgressionManager {
         }
     }
 
+    /**
+     * Resilient database update with retry logic.
+     */
     /**
      * Start the voice tracking loop.
      * Rewards members in voice channels with XP/RP.
@@ -82,6 +152,7 @@ class ProgressionManager {
      * Call this on every message to process XP gain.
      */
     async handleMessage(message) {
+        if (!this.enabled) return;
         if (message.author.bot || !message.guild) return;
         if (message.content.length < this.MSG_MIN_LENGTH) return;
 
@@ -96,6 +167,7 @@ class ProgressionManager {
         // Adjust this to your database provider
         const db = this.client.database?.getDatabase();
         if (!db) return;
+        if (!(await this.ensureProgressionTable())) return;
 
         try {
             let data = await db("user_progression").where({ user_id: userId }).first();
@@ -180,13 +252,25 @@ class ProgressionManager {
             }
 
         } catch (error) {
+            if (this.isMissingTableError(error)) {
+                if (this.enabled) {
+                    this.enabled = false;
+                    this.client.getLogger().send(
+                        `Table user_progression indisponible: ${error.message}. Désactivation des mises à jour de progression.`,
+                        "WARN",
+                    );
+                }
+                return;
+            }
             this.client.getLogger().send(`Error in ProgressionManager.handleMessage: ${error.message}`, "ERROR");
         }
     }
 
     async addVoiceTime(userId, ms) {
+        if (!this.enabled) return;
         const db = this.client.database?.getDatabase();
         if (!db) return;
+        if (!(await this.ensureProgressionTable())) return;
 
         try {
             let data = await db("user_progression").where({ user_id: userId }).first();
@@ -254,13 +338,25 @@ class ProgressionManager {
                 });
             }
         } catch (error) {
+            if (this.isMissingTableError(error)) {
+                if (this.enabled) {
+                    this.enabled = false;
+                    this.client.getLogger().send(
+                        `Table user_progression indisponible: ${error.message}. Désactivation des mises à jour de progression.`,
+                        "WARN",
+                    );
+                }
+                return null;
+            }
             this.client.getLogger().send(`Error in ProgressionManager.addVoiceTime: ${error.message}`, "ERROR");
         }
     }
 
     async addMatchResult(userId, isWin) {
+        if (!this.enabled) return null;
         const db = this.client.database?.getDatabase();
         if (!db) return null;
+        if (!(await this.ensureProgressionTable())) return null;
 
         try {
             let data = await db("user_progression").where({ user_id: userId }).first();
@@ -336,6 +432,7 @@ class ProgressionManager {
     async initializeUser(userId) {
         const db = this.client.database?.getDatabase();
         if (!db) return null;
+        if (!(await this.ensureProgressionTable())) return null;
 
         try {
             const data = await db("user_progression").where({ user_id: userId }).first();
@@ -351,6 +448,16 @@ class ProgressionManager {
             }
             return data;
         } catch (error) {
+            if (this.isMissingTableError(error)) {
+                if (this.enabled) {
+                    this.enabled = false;
+                    this.client.getLogger().send(
+                        `Table user_progression indisponible: ${error.message}. Désactivation des mises à jour de progression.`,
+                        "WARN",
+                    );
+                }
+                return null;
+            }
             this.client.getLogger().send(`Error in ProgressionManager.initializeUser: ${error.message}`, "ERROR");
             return null;
         }

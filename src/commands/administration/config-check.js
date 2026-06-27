@@ -86,6 +86,7 @@ const configCheck = {
       resolveChannelStatus(guild, "SYNC_CHANNEL_ID", "Salon sync"),
       resolveChannelStatus(guild, "SYNC_LOG_CHANNEL_ID", "Salon logs sync"),
       resolveChannelStatus(guild, "WELCOME_CHANNEL_ID", "Salon bienvenue"),
+      resolveChannelStatus(guild, "GOODBYE_CHANNEL_ID", "Salon départ"),
       resolveChannelStatus(guild, "TICKET_LOG_CHANNEL_ID", "Salon logs ticket"),
       resolveChannelStatus(guild, "SUGGEST_CHANNEL_ID", "Salon suggestions"),
     ];

@@ -28,6 +28,23 @@ async function ensureStaffupdateColumns(db) {
   if (ensurePromise) return ensurePromise;
 
   ensurePromise = (async () => {
+    const hasTable = await db.schema.hasTable("staffupdate");
+    if (!hasTable) {
+      await db.schema.createTable("staffupdate", (table) => {
+        table.increments("id").primary();
+        table.string("guild", 20).notNullable().index();
+        table.string("channel_id", 20).notNullable();
+        table.string("staff_type", 100).notNullable();
+        table.text("role_id").notNullable();
+        table.text("filter_role").nullable();
+        table.string("emblem", 120).nullable();
+        table.string("color", 7).nullable();
+        table.string("section_emoji", 80).nullable();
+        table.string("role_emoji", 80).nullable();
+      });
+      return;
+    }
+
     const hasEmblem = await db.schema.hasColumn("staffupdate", "emblem");
     if (!hasEmblem) {
       await db.schema.alterTable("staffupdate", (table) => {

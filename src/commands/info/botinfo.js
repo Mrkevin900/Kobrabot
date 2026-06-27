@@ -39,7 +39,7 @@ const botinfo = {
         { name: "Node", value: process.version, inline: true },
         {
           name: "Dev",
-          value: "Le bot est en developpement. En cas de probleme, contacte Mrkevin.",
+          value: "Le bot est en developpement. En cas de probleme, contacte mrkevin.",
           inline: false,
         },
       )

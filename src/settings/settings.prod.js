@@ -38,7 +38,7 @@ const config = {
   guildId: "704412119847796856",
 
   embed: {
-    footer: "🤖 KobraBot | Mode : Prod | SquadFinder FR",
+    footer: "🤖 KobraBot | Mode : Prod | mrkevin",
     classColor: "#847bee",
     errorColor: "#ff5733",
     alertColor: "#ffca33",

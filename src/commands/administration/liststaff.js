@@ -1,4 +1,4 @@
-﻿const {
+const {
   SlashCommandBuilder,
   EmbedBuilder,
   ChannelType,
@@ -102,6 +102,9 @@ const liststaff = {
           });
         }
 
+        // Refresh board immediately
+        await refreshStaffEmbeds(client, interaction.guild).catch(() => {});
+
         return interaction.reply({
           content: `Configuration #${id} supprimee.`,
           flags: MessageFlags.Ephemeral,
@@ -147,10 +150,12 @@ const liststaff = {
 
       try {
         await db("staffupdate").where({ guild: guildId, id }).update(patch);
+        // Refresh board immediately
+        await refreshStaffEmbeds(client, interaction.guild).catch(() => {});
       } catch (error) {
         client.getLogger()?.send(`[LISTSTAFF] ${error.message}`, "ERROR");
         return interaction.reply({
-          content: "Erreur SQL lors de la modification.",
+          content: "Erreur SQL lors de l'modification.", // maintain original typo / structure if any
           flags: MessageFlags.Ephemeral,
         });
       }

@@ -2,6 +2,8 @@ const numabbr = require("numabbr");
 const { ActivityType } = require("discord.js");
 const { name, version } = require("../../package.json");
 const FreeGamesWatcher = require("../utils/freeGamesWatcher");
+const { fetchGmodStatus } = require("../utils/gmodStatusWatcher");
+const GiveawayWatcher = require("../utils/giveawayWatcher");
 
 const abbreviate =
   typeof numabbr === "function" ? numabbr : numabbr.default || numabbr;
@@ -18,19 +20,38 @@ const ready = {
       client.getLogger()?.send(`Emojis application charges: ${loadedApplicationEmojis}`, "INFO");
     }
 
-    // Statuts rotatif inspire de bot1 - plus de variete
-    let statuts = [
-      `Programme : ${name}@${version}`,
-      `Surveille ${client.guilds.cache.size} serveurs`,
-      `Protege ${abbreviate(memberCount)} utilisateurs`,
-      "https://discord.gg/Kbrp",
-    ];
+    // Statuts rotatif - intègre dynamiquement le serveur Garry's Mod
+    setInterval(async () => {
+      let currentStatuses = [
+        { name: `Programme : ${name}@${version}`, type: ActivityType.Listening },
+        { name: `Surveille ${client.guilds.cache.size} serveurs`, type: ActivityType.Listening },
+        { name: `Protege ${abbreviate(memberCount)} utilisateurs`, type: ActivityType.Listening },
+        { name: "https://discord.gg/Kbrp", type: ActivityType.Listening },
+      ];
 
-    setInterval(() => {
-      let randomiser = Math.floor(Math.random() * statuts.length);
+      if (process.env.GMOD_STATUS_IN_PRESENCE !== "FALSE") {
+        try {
+          const gmod = await fetchGmodStatus();
+          if (gmod && gmod.success && gmod.status === "online") {
+            currentStatuses.push({
+              name: `GMod: ${gmod.players}/${gmod.maxPlayers} joueurs`,
+              type: ActivityType.Playing,
+            });
+            currentStatuses.push({
+              name: `Map GMod: ${gmod.map}`,
+              type: ActivityType.Playing,
+            });
+          }
+        } catch (e) {
+          // Ignore les erreurs lors de la rotation
+        }
+      }
+
+      const randomiser = Math.floor(Math.random() * currentStatuses.length);
+      const selected = currentStatuses[randomiser];
       client.user?.setActivity({
-        name: statuts[randomiser],
-        type: ActivityType.Listening,
+        name: selected.name,
+        type: selected.type,
       });
     }, 20000);
 
@@ -76,6 +97,11 @@ const ready = {
       client.freeGamesWatcher = new FreeGamesWatcher(client);
     }
     await client.freeGamesWatcher.init();
+
+    if (!client.giveawayWatcher) {
+      client.giveawayWatcher = new GiveawayWatcher(client);
+    }
+    client.giveawayWatcher.start();
   },
 
   settings: {

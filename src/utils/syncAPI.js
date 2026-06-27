@@ -1229,6 +1229,18 @@ class SyncAPI {
         .setStyle(ButtonStyle.Success),
     );
 
+    const { AttachmentBuilder } = require("discord.js");
+    const path = require("path");
+
+    const logoAttachment = new AttachmentBuilder(
+      path.join(__dirname, "../assets/sync_logo.jpg"),
+      { name: "sync_logo.jpg" }
+    );
+    const bannerAttachment = new AttachmentBuilder(
+      path.join(__dirname, "../assets/sync_banner.png"),
+      { name: "sync_banner.png" }
+    );
+
     const embedMain = new EmbedBuilder()
       .setTitle(`${syncEmoji} Synchronisation Kobralost-RP`)
       .setDescription(
@@ -1238,7 +1250,7 @@ class SyncAPI {
         "dans la synchronisation automatique.",
       )
       .setColor(0xff0000)
-      .setThumbnail("https://i.imgur.com/NGX3iiX.png")
+      .setThumbnail("attachment://sync_logo.jpg")
       .setFooter({ text: "Synchronisation KobraBot - Kobralost" });
 
     const embedVerify = new EmbedBuilder()
@@ -1249,13 +1261,14 @@ class SyncAPI {
         "Sans verification, ton pseudo et tes roles **ne seront pas synchronisables**.",
       )
       .setColor(0xff0000)
-      .setImage("https://i.imgur.com/ZoOiFus.png")
+      .setImage("attachment://sync_banner.png")
       .setFooter({ text: "Synchronisation KobraBot - Kobralost" });
 
     try {
       await channel.send({
         embeds: [embedMain, embedVerify],
         components: [row],
+        files: [logoAttachment, bannerAttachment],
       });
       this.logger?.send("[MENU] Messages de sync envoyes", "INFO");
     } catch (e) {

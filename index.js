@@ -57,7 +57,7 @@ async function safeStart() {
     client.progressionManager.startVoiceTracking();
     client.getLogger().send("Systeme de progression (XP/Rangs) active", "READY");
 
-    const shouldSyncCommands = process.argv.includes('--sync-commands') || process.env.SYNC_COMMANDS === 'true';
+    const shouldSyncCommands = process.env.SYNC_COMMANDS !== 'false';
     await client.syncInts({ commands: shouldSyncCommands });
 
     const token =
@@ -73,6 +73,10 @@ async function safeStart() {
     await client.login(token);
     client.getLogger().setClient(client);
     client.getLogger().send("BOT CONNECTE ET OPERATIONNEL", "READY");
+
+    // Démarrage du serveur API Express pour l'interconnexion
+    const { startServer } = require("./src/api/apiServer");
+    startServer(client);
   } catch (error) {
     client.getLogger().send(`Erreur critique au demarrage: ${error.message}`, "ERROR");
     if (error.stack) {

@@ -22,6 +22,16 @@ const punishments = {
     ),
 
   async executeCommand(client, interaction) {
+    const viewRoleId = process.env.PUNISHMENTS_VIEW_ROLE_ID;
+    if (viewRoleId && !interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      if (!interaction.member.roles.cache.has(viewRoleId)) {
+        return interaction.reply({
+          content: "❌ Tu n'as pas le rôle requis pour voir les casiers judiciaires.",
+          flags: MessageFlags.Ephemeral
+        });
+      }
+    }
+
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const KobralostAPI = require("../../utils/KobralostAPI");

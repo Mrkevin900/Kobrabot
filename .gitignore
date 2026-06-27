@@ -50,6 +50,7 @@ yarn.lock
 .cache/
 tmp/
 temp/
+scratch/
 
 # ==============================
 # 🖼️ ASSETS LOURDS (optionnel)

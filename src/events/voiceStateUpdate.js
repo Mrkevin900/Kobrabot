@@ -158,6 +158,7 @@ function buildVocalPanelEmbed(client, guild, member, entry) {
       },
     )
     .setColor(0x9b59b6)
+    .setImage("attachment://vocal_banner.png")
     .setFooter({ text: `${member.user.username} | Systeme Vocal` })
     .setTimestamp();
 }
@@ -423,11 +424,16 @@ const VoiceStateUpdate = {
         const rows = buildVocalRows(client, privateChannel.id, member.id, entry);
 
         if (isPublicTrigger && privateChannel && typeof privateChannel.send === "function") {
+          const path = require("path");
+          const { AttachmentBuilder } = require("discord.js");
+          const bannerPath = path.join(__dirname, "../assets/vocal_banner.png");
+          const file = new AttachmentBuilder(bannerPath, { name: "vocal_banner.png" });
           await privateChannel
             .send({
               content: `<@${member.id}>`,
               embeds: [embed],
               components: rows,
+              files: [file],
             })
             .catch((panelErr) => {
               client

@@ -199,14 +199,15 @@ async function handleSlashCommand(client, interaction) {
 
     // Empecher le bot de crasher si l'interaction est expiree
     try {
+      const errorEmoji = client.emoji("error", "❌");
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
-          content: "❌ Une erreur est survenue lors de l'exécution de cette commande.",
+          content: `${errorEmoji} Une erreur est survenue lors de l'exécution de cette commande.`,
           flags: MessageFlags.Ephemeral,
         }).catch(() => {});
       } else {
         await interaction.followUp({
-          content: "❌ Une erreur est survenue lors du traitement final de la commande.",
+          content: `${errorEmoji} Une erreur est survenue lors du traitement final de la commande.`,
           flags: MessageFlags.Ephemeral,
         }).catch(() => {});
       }
@@ -299,6 +300,9 @@ async function handleLevelCmdPanelSelect(client, interaction) {
 }
 
 async function handleButton(client, interaction) {
+  if (interaction.customId === "giveaway_participate") {
+    return handleGiveawayParticipate(client, interaction);
+  }
   if (interaction.customId === "suggest_upvote") {
     return handleSuggestionVote(client, interaction, "up");
   }
@@ -419,6 +423,61 @@ async function handleSecurityToggle(client, interaction) {
   }
 
   await interaction.update({ embeds: [embed], components: rows });
+}
+
+async function handleGiveawayParticipate(client, interaction) {
+  const { getDatabase } = require("../database/database");
+  const { MessageFlags } = require("discord.js");
+  const db = getDatabase();
+  const errorEmoji = client.emoji("error", "❌");
+  const successEmoji = client.emoji("success", "🎉");
+
+  if (!db) {
+    return interaction.reply({ content: `${errorEmoji} Base de données non disponible.`, flags: MessageFlags.Ephemeral });
+  }
+
+  const messageId = interaction.message.id;
+  try {
+    const giveaway = await db("giveaways").where({ message_id: messageId }).first();
+    if (!giveaway) {
+      return interaction.reply({ content: `${errorEmoji} Ce concours n'est pas enregistré dans la base de données.`, flags: MessageFlags.Ephemeral });
+    }
+
+    if (giveaway.ended) {
+      return interaction.reply({ content: `${errorEmoji} Ce concours est déjà terminé !`, flags: MessageFlags.Ephemeral });
+    }
+
+    let participants = [];
+    try {
+      participants = typeof giveaway.participants === "string" ? JSON.parse(giveaway.participants) : (giveaway.participants || []);
+    } catch (e) {
+      participants = [];
+    }
+
+    const userId = interaction.user.id;
+    if (participants.includes(userId)) {
+      participants = participants.filter(id => id !== userId);
+      await db("giveaways").where({ message_id: messageId }).update({
+        participants: JSON.stringify(participants)
+      });
+      return interaction.reply({
+        content: `${errorEmoji} Tu t'es désinscrit du concours.`,
+        flags: MessageFlags.Ephemeral
+      });
+    } else {
+      participants.push(userId);
+      await db("giveaways").where({ message_id: messageId }).update({
+        participants: JSON.stringify(participants)
+      });
+      return interaction.reply({
+        content: `${successEmoji} Ta participation a bien été enregistrée !`,
+        flags: MessageFlags.Ephemeral
+      });
+    }
+  } catch (err) {
+    client.getLogger()?.send(`Erreur participation giveaway: ${err.message}`, "ERROR");
+    return interaction.reply({ content: `${errorEmoji} Une erreur est survenue lors de l'enregistrement.`, flags: MessageFlags.Ephemeral });
+  }
 }
 
 module.exports = { default: interactionCreate };

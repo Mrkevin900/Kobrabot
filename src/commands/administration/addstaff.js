@@ -1,4 +1,4 @@
-﻿const {
+const {
   SlashCommandBuilder,
   ChannelType,
   PermissionFlagsBits,
@@ -133,6 +133,10 @@ const addstaff = {
         section_emoji: sectionEmoji || null,
         role_emoji: roleEmoji || null,
       });
+
+      // Automatically refresh staff board
+      const { refreshStaffEmbeds } = require("../../events/guildMemberUpdate");
+      await refreshStaffEmbeds(client, guild).catch(() => {});
     } catch (error) {
       client.getLogger()?.send(`[ADDSTAFF] ${error.message}`, "ERROR");
       return interaction.reply({
