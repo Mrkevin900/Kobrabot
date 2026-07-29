@@ -132,14 +132,10 @@ const sync = {
     for (const [apiName, discordId] of Object.entries(roleMap)) {
       const mapNorm = syncAPI._normalize(apiName);
       const mapCanon = syncAPI._normalize_role_name(apiName);
-      const commissaireDetected = syncAPI._is_commissaire_variant(apiName)
-        ? apiRoleNames.some((name) => syncAPI._is_commissaire_variant(name))
-        : false;
 
       if (
         apiRolesNorm.has(mapNorm) ||
-        apiRolesCanon.has(mapCanon) ||
-        commissaireDetected
+        apiRolesCanon.has(mapCanon)
       ) {
         const resolvedId = syncAPI._resolve_discord_role_id(guild, apiName, discordId);
         if (resolvedId) targetIds.add(resolvedId);
@@ -157,6 +153,12 @@ const sync = {
       if (byName) managedIds.add(byName.id);
     }
 
+    // Protection : ne jamais synchroniser (et donc ne jamais retirer) le role Membre/Citoyen de base
+    const memberRoleId = process.env.MEMBER_ROLE_ID || "";
+    if (memberRoleId) {
+      managedIds.delete(memberRoleId);
+    }
+
     const currentManagedRoles = Array.from(member.roles.cache.values()).filter((role) =>
       managedIds.has(role.id),
     );
@@ -166,9 +168,7 @@ const sync = {
     const toAdd = targetRoles.filter(
       (role) => !currentManagedRoles.some((currentRole) => currentRole.id === role.id),
     );
-    const toRemove = currentManagedRoles.filter(
-      (role) => !targetRoles.some((targetRole) => targetRole.id === role.id),
-    );
+    const toRemove = []; // Protection : ne jamais retirer aucun rôle lors de la synchronisation
 
     const currentNick = member.nickname || member.user.username;
     const desiredNick = rpName ? rpName.slice(0, 32) : "Aucun nom RP detecte";

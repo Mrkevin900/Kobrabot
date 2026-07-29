@@ -824,15 +824,10 @@ class SyncAPI {
     for (const [apiName, discordId] of Object.entries(ROLE_MAP)) {
       const mapNorm = this._normalize(apiName);
       const mapCanon = this._normalize_role_name(apiName);
-      const commissaireKey = this._is_commissaire_variant(apiName);
-      const commissaireDetected = commissaireKey
-        ? apiRoleNames.some((name) => this._is_commissaire_variant(name))
-        : false;
 
       if (
         apiRolesNorm.has(mapNorm) ||
-        apiRolesCanon.has(mapCanon) ||
-        commissaireDetected
+        apiRolesCanon.has(mapCanon)
       ) {
         const resolvedId = this._resolve_discord_role_id(guild, apiName, discordId);
         if (resolvedId) targetIds.add(resolvedId);
@@ -850,6 +845,11 @@ class SyncAPI {
       );
       if (byName) managedIds.add(byName.id);
     }
+
+    // Protection : ne jamais synchroniser (et donc ne jamais retirer) le role Membre/Citoyen de base
+    if (MEMBER_ROLE_ID) {
+      managedIds.delete(MEMBER_ROLE_ID);
+    }
     const currentManaged = new Set(
       Array.from(member.roles.cache.values())
         .filter((r) => managedIds.has(r.id))
@@ -857,7 +857,7 @@ class SyncAPI {
     );
 
     const toAddIds = [...targetIds].filter((id) => !currentManaged.has(id));
-    const toRemoveIds = [...currentManaged].filter((id) => !targetIds.has(id));
+    const toRemoveIds = []; // Protection : ne jamais retirer aucun rôle lors de la synchronisation
 
     const commissaireRoleId = ROLE_MAP.Commissaire || ROLE_MAP.Comissaire;
     if (
@@ -1624,11 +1624,9 @@ class SyncAPI {
     const fuzzy = guild.roles.cache.find((r) => {
       const n = this._normalize(r.name);
       const c = this._normalize_role_name(r.name);
-      return (
-        n.includes(normApi) ||
-        normApi.includes(n) ||
-        (canonApi && c && (c.includes(canonApi) || canonApi.includes(c)))
-      );
+      const matchNorm = n && normApi && (n.includes(normApi) || normApi.includes(n));
+      const matchCanon = canonApi && c && (c.includes(canonApi) || canonApi.includes(c));
+      return matchNorm || matchCanon;
     });
     if (fuzzy) {
       this.logger?.send(

@@ -5,34 +5,34 @@
 
 const ROLE_MAPPINGS = {
   // Staff Roles
-  Fondateur: "1449129871514009826",
-  "Co-Fondateur": "1449129820117274714",
-  Administration: "1449129799057543218",
-  "Developpeur apprenti": "1449129740395876464",
-  "Moderateur Loyal": "1449130440224145529",
-  "Moderateur Senior": "1449130544800727211",
-  "Moderateur Certifie": "1449129714680729630",
-  Moderateur: "1449129691876298854",
-  "Moderateur Apprenti": "1449129654530347170",
+  Fondateur: "1520741442098692096",
+  "Co-Fondateur": "1520741423069003856",
+  Administration: "1520741380916514946",
+  "Developpeur apprenti": "1520741335857102900",
+  "Moderateur Loyal": "1520741309206364230",
+  "Moderateur Senior": "1520741287043534878",
+  "Moderateur Certifie": "1520741264805335161",
+  Moderateur: "1520741236338593953",
+  "Moderateur Apprenti": "1520741213618311309",
 
   // RP Roles (Police / Commissaire)
-  "Commissaire Gérant": "1500639443118461110",
-  "Comissaire Gérant": "1500639443118461110",
-  "Commissaire Gerant": "1500639443118461110",
-  "Comissaire Gerant": "1500639443118461110",
-  Commissaire_Gérant: "1500639443118461110",
-  Commissaire: "1458211387091325101",
+  "Commissaire Gérant": "1520741168168702032",
+  "Comissaire Gérant": "1520741168168702032",
+  "Commissaire Gerant": "1520741168168702032",
+  "Comissaire Gerant": "1520741168168702032",
+  Commissaire_Gérant: "1520741168168702032",
+  Commissaire: "1520741143762178129",
 
   // Technical / Other Roles
-  Mappeur: "1449129618111205416",
-  Legende: "1411313306651721768",
-  Donateur: "1411313344543068210",
+  Mappeur: "1520741191853936713",
+  Legende: "1520434458161971250",
+  Donateur: "1520434458161971250",
 
   // Pending Roles
-  "Formateur Staff": "1500639132211347586",
-  Formateur: "1500639132211347586",
-  Animateur: "1500639228768555049",
-  Designer: "1500639298154795048",
+  "Formateur Staff": "1520741097108930570",
+  Formateur: "1520741097108930570",
+  Animateur: "1520741025616760842",
+  Designer: "1520741118789156934",
 };
 
 const EMOJI_CONFIG = {
@@ -54,7 +54,7 @@ const EMOJI_CONFIG = {
   force: { names: ["kb_add", "force", "rocket", "ufo", "zeus"], fallback: "\u{1F680}" },
   status: { names: ["magnifying_glass_112", "magnifying_glass", "status", "search"], fallback: "\u{1F50D}" },
   stats: { names: ["briefcase", "money", "stats", "chart", "star", "manuteno"], fallback: "\u{1F4CA}" },
-  
+
   // Custom overhaul mapping
   success: { names: ["success", "checkmark", "verifiedroxo", "verifiedbook", "2", "4"], fallback: "✅" },
   error: { names: ["error", "error_112", "no", "ban", "cancel", "trash"], fallback: "❌" },

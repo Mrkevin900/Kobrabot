@@ -181,6 +181,9 @@ class Database {
       // Auto create GMod tables
       await this.initGmodTables();
 
+      // Auto create Progression Manager tables
+      await this.initProgressionManagerTables();
+
       return true;
     } catch (error) {
       if (error?.errno === 1049) {
@@ -286,6 +289,112 @@ class Database {
       }
     } catch (error) {
       this.client.getLogger().send(`Error initializing GMod tables: ${error.message}`, "ERROR");
+    }
+  }
+
+  async initProgressionManagerTables() {
+    try {
+      const knex = this.db;
+      if (!knex) return;
+
+      if (!(await knex.schema.hasTable("progression_guild_config"))) {
+        await knex.schema.createTable("progression_guild_config", (table) => {
+          table.string("guild_id", 20).primary();
+          table.string("staff_channel_id", 20).nullable();
+          table.string("log_channel_id", 20).nullable();
+          table.boolean("auto_next_objective").defaultTo(false);
+          table.boolean("dm_notifications").defaultTo(true);
+          table.string("language", 5).defaultTo("fr");
+          table.timestamp("created_at").defaultTo(knex.fn.now());
+          table.timestamp("updated_at").defaultTo(knex.fn.now());
+        });
+      }
+
+      if (!(await knex.schema.hasTable("progression_teams"))) {
+        await knex.schema.createTable("progression_teams", (table) => {
+          table.increments("id").primary();
+          table.string("guild_id", 20).notNullable().index();
+          table.string("name", 100).notNullable();
+          table.string("icon", 255).nullable();
+          table.string("emoji", 50).defaultTo("📦");
+          table.string("color", 10).defaultTo("#5865F2");
+          table.text("description").nullable();
+          table.string("goal_item", 100).notNullable();
+          table.bigInteger("goal_target").notNullable();
+          table.bigInteger("goal_current").defaultTo(0);
+          table.string("role_id", 20).nullable();
+          table.string("channel_id", 20).nullable();
+          table.string("category_id", 20).nullable();
+          table.string("leader_id", 20).nullable();
+          table.string("co_leader_id", 20).nullable();
+          table.enum("status", ["open", "closed", "suspended"]).defaultTo("open");
+          table.string("dashboard_message_id", 20).nullable();
+          table.timestamp("created_at").defaultTo(knex.fn.now());
+          table.timestamp("updated_at").defaultTo(knex.fn.now());
+        });
+      }
+
+      if (!(await knex.schema.hasTable("progression_members"))) {
+        await knex.schema.createTable("progression_members", (table) => {
+          table.increments("id").primary();
+          table.string("guild_id", 20).notNullable().index();
+          table.integer("team_id").unsigned().notNullable().references("id").inTable("progression_teams").onDelete("CASCADE");
+          table.string("user_id", 20).notNullable().index();
+          table.enum("role_in_team", ["leader", "coleader", "member"]).defaultTo("member");
+          table.bigInteger("total_produced").defaultTo(0);
+          table.integer("validations_count").defaultTo(0);
+          table.integer("refusals_count").defaultTo(0);
+          table.timestamp("joined_at").defaultTo(knex.fn.now());
+        });
+      }
+
+      if (!(await knex.schema.hasTable("progression_submissions"))) {
+        await knex.schema.createTable("progression_submissions", (table) => {
+          table.increments("id").primary();
+          table.string("guild_id", 20).notNullable().index();
+          table.integer("team_id").unsigned().notNullable().references("id").inTable("progression_teams").onDelete("CASCADE");
+          table.string("user_id", 20).notNullable().index();
+          table.bigInteger("quantity").notNullable();
+          table.string("proof_url", 1024).notNullable();
+          table.text("comment").nullable();
+          table.enum("status", ["pending", "approved", "rejected"]).defaultTo("pending");
+          table.string("validator_id", 20).nullable();
+          table.text("rejection_reason").nullable();
+          table.string("validation_message_id", 20).nullable();
+          table.timestamp("created_at").defaultTo(knex.fn.now());
+          table.timestamp("validated_at").nullable();
+        });
+      }
+
+      if (!(await knex.schema.hasTable("progression_history"))) {
+        await knex.schema.createTable("progression_history", (table) => {
+          table.increments("id").primary();
+          table.string("guild_id", 20).notNullable().index();
+          table.integer("team_id").nullable();
+          table.string("user_id", 20).nullable();
+          table.string("actor_id", 20).notNullable();
+          table.string("action", 100).notNullable();
+          table.text("old_value").nullable();
+          table.text("new_value").nullable();
+          table.string("ip_address", 45).defaultTo("127.0.0.1");
+          table.timestamp("created_at").defaultTo(knex.fn.now());
+        });
+      }
+
+      if (!(await knex.schema.hasTable("progression_achievements"))) {
+        await knex.schema.createTable("progression_achievements", (table) => {
+          table.increments("id").primary();
+          table.string("guild_id", 20).notNullable().index();
+          table.string("user_id", 20).notNullable().index();
+          table.string("badge_key", 50).notNullable();
+          table.timestamp("unlocked_at").defaultTo(knex.fn.now());
+          table.unique(["guild_id", "user_id", "badge_key"]);
+        });
+      }
+
+      this.client.getLogger().send("MySQL tables 'progression_*' initialized", "READY");
+    } catch (error) {
+      this.client.getLogger().send(`Error initializing Progression tables: ${error.message}`, "ERROR");
     }
   }
 

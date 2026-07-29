@@ -1,4 +1,5 @@
 const { GatewayIntentBits, Partials } = require("discord.js");
+const { HEX_COLORS } = require("../utils/theme");
 
 /**
  * @typedef {Object} EmbedConfig
@@ -39,11 +40,11 @@ const config = {
 
   embed: {
     footer: "🤖 KobraBot | Mode : Test | mrkevin",
-    classColor: "#847bee",
-    errorColor: "#ff5733",
-    alertColor: "#ffca33",
-    readyColor: "#a8da68",
-    notifColor: "#7bc6ee",
+    classColor: HEX_COLORS.PRIMARY,
+    errorColor: HEX_COLORS.ERROR,
+    alertColor: HEX_COLORS.GOLD,
+    readyColor: HEX_COLORS.SUCCESS,
+    notifColor: HEX_COLORS.INFO,
   },
 };
 

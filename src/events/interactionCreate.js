@@ -33,6 +33,7 @@ const {
 
 const TicketManager = require("../interactions/TicketManager");
 const VocalManager = require("../interactions/VocalManager");
+const ProgressionInteractionHandler = require("../interactions/ProgressionInteractionHandler");
 const CacheManager = require("../utils/CacheManager");
 
 const commandRateLimits = new CacheManager(3000);
@@ -300,6 +301,9 @@ async function handleLevelCmdPanelSelect(client, interaction) {
 }
 
 async function handleButton(client, interaction) {
+  if (interaction.customId.startsWith("progression_")) {
+    return ProgressionInteractionHandler.handleButton(client, interaction);
+  }
   if (interaction.customId === "giveaway_participate") {
     return handleGiveawayParticipate(client, interaction);
   }
@@ -367,6 +371,10 @@ async function handleButton(client, interaction) {
 }
 
 async function handleModal(client, interaction) {
+  if (interaction.customId.startsWith("progression_")) {
+    return ProgressionInteractionHandler.handleModal(client, interaction);
+  }
+
   if (interaction.customId.startsWith("name_modal_")) {
     if (client.syncAPI) await client.syncAPI.handleNameModalSubmit(interaction);
     return;
